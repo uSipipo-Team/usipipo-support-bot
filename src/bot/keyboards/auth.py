@@ -8,13 +8,37 @@ class AuthMessages:
     WELCOME_NEW_USER = (
         "✅ ¡Bienvenido a uSipipo Support!\n\n"
         "Tu cuenta ha sido creada y estás autenticado.\n\n"
-        "Usa /help para ver los comandos disponibles de soporte."
+        "Usa el menú principal para navegar."
     )
 
     WELCOME_RETURNING_USER = (
-        "👋 ¡Bienvenido de nuevo a Soporte!\n\n"
-        "Tu cuenta está vinculada con @usipipobot.\n\n"
-        "Usa /help para ver los comandos disponibles."
+        "👋 *¡Hola! Bienvenido al Soporte Técnico de uSipipo* ✨\n\n"
+        "Soy tu asistente virtual y estoy aquí para ayudarte.\n\n"
+        "*¿Qué necesitas hoy?*\n\n"
+        "🎫 *Gestión de Tickets*\n"
+        "• Ver tus tickets existentes\n"
+        "• Crear nuevo ticket\n"
+        "• Consultar estado\n\n"
+        "❓ *Ayuda y Recursos*\n"
+        "• Preguntas frecuentes\n"
+        "• Estado del servicio\n"
+        "• Hablar con agente\n\n"
+        "🔹 *Si vienes de @usipipobot*, podemos ayudarte con:\n"
+        "• Problemas de conexión VPN\n"
+        "• Facturación y pagos\n"
+        "• Configuración de claves\n"
+        "• Otros problemas técnicos"
+    )
+
+    # Deep link specific messages
+    WELCOME_FROM_MAIN_BOT = (
+        "👋 *¡Hola! Veo que vienes de @usipipobot* ✨\n\n"
+        "Entiendo que necesitas ayuda con algo.\n\n"
+        "Para brindarte la mejor atención, por favor:\n\n"
+        "1️⃣ *Revisa tus tickets existentes* - Puede que ya tengas uno en proceso\n"
+        "2️⃣ *Crea un nuevo ticket* - Si es un problema nuevo\n"
+        "3️⃣ *Consulta el estado del servicio* - Para ver si hay problemas generales\n\n"
+        "🔹 *Nuestro equipo te responderá lo antes posible*"
     )
 
     # Auth errors

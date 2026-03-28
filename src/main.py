@@ -177,6 +177,11 @@ def create_application(token: str) -> Application:
     for handler in get_tickets_callback_handlers(api_client, token_storage):
         app.add_handler(handler)
 
+    # Register support menu handlers
+    from src.bot.handlers.support_menu import get_support_menu_handlers
+    for handler in get_support_menu_handlers():
+        app.add_handler(handler)
+
     # Register error handler
     app.add_error_handler(error_handler)  # type: ignore[arg-type]
 

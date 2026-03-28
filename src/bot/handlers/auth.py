@@ -7,6 +7,7 @@ from telegram.ext import ContextTypes
 from src.infrastructure.api_client import APIClient
 from src.infrastructure.token_storage import TokenStorage
 from src.bot.keyboards.auth import AuthMessages
+from src.bot.keyboards.support import SupportKeyboard
 
 logger = logging.getLogger(__name__)
 
@@ -31,8 +32,12 @@ class AuthHandler:
         """
         Maneja /start - registro y autenticación automática.
 
-        Si el usuario ya está autenticado, muestra mensaje de bienvenida.
+        Si el usuario ya está autenticado, muestra mensaje de bienvenida + menú.
         Si no, registra y autentica automáticamente.
+        
+        Soporta deep links:
+        - help_from_main: Usuario viene del bot principal buscando ayuda
+        - ticket_issue: Usuario viene por un problema de ticket
         """
         if update.effective_user is None:
             logger.warning("start_handler called without effective_user")
@@ -43,7 +48,30 @@ class AuthHandler:
         # Check if already authenticated
         if await self.tokens.is_authenticated(telegram_id):
             if update.message:
-                await update.message.reply_text(AuthMessages.WELCOME_RETURNING_USER)
+                # Check for deep link
+                if context.args and len(context.args) > 0:
+                    deep_link = context.args[0]
+                    if deep_link == "help_from_main":
+                        # User came from main bot
+                        await update.message.reply_text(
+                            text=AuthMessages.WELCOME_FROM_MAIN_BOT,
+                            reply_markup=SupportKeyboard.main_menu(),
+                            parse_mode="Markdown",
+                        )
+                    else:
+                        # Generic deep link
+                        await update.message.reply_text(
+                            text=AuthMessages.WELCOME_RETURNING_USER,
+                            reply_markup=SupportKeyboard.main_menu(),
+                            parse_mode="Markdown",
+                        )
+                else:
+                    # No deep link - standard welcome
+                    await update.message.reply_text(
+                        text=AuthMessages.WELCOME_RETURNING_USER,
+                        reply_markup=SupportKeyboard.main_menu(),
+                        parse_mode="Markdown",
+                    )
             return
 
         # Register and auto-authenticate new user
@@ -59,6 +87,7 @@ class AuthHandler:
         Registra y autentica usuario automáticamente.
 
         Llama al backend para crear usuario y obtener tokens.
+        Muestra menú principal después de autenticar.
         """
         try:
             response = await self.api.post(
@@ -69,7 +98,25 @@ class AuthHandler:
             if "access_token" in response:
                 await self.tokens.store(telegram_id, response)
                 if update.message:
-                    await update.message.reply_text(AuthMessages.WELCOME_NEW_USER)
+                    # Check for deep link for new users too
+                    if context.args and len(context.args) > 0:
+                        deep_link = context.args[0]
+                        if deep_link == "help_from_main":
+                            await update.message.reply_text(
+                                text=AuthMessages.WELCOME_FROM_MAIN_BOT,
+                                reply_markup=SupportKeyboard.main_menu(),
+                                parse_mode="Markdown",
+                            )
+                        else:
+                            await update.message.reply_text(
+                                text=AuthMessages.WELCOME_NEW_USER,
+                                reply_markup=SupportKeyboard.main_menu(),
+                            )
+                    else:
+                        await update.message.reply_text(
+                            text=AuthMessages.WELCOME_NEW_USER,
+                            reply_markup=SupportKeyboard.main_menu(),
+                        )
             else:
                 if update.message:
                     await update.message.reply_text(AuthMessages.AUTH_ERROR)
