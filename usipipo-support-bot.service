@@ -1,0 +1,28 @@
+[Unit]
+Description=uSipipo Support Telegram Bot
+Documentation=https://github.com/uSipipo-Team/usipipo-support-bot
+After=network.target redis.service
+
+[Service]
+Type=simple
+User=usipipo
+Group=usipipo
+WorkingDirectory=/opt/usipipo-support-bot
+Environment=PATH=/opt/usipipo-support-bot/.venv/bin
+EnvironmentFile=/opt/usipipo-support-bot/.env
+ExecStart=/opt/usipipo-support-bot/.venv/bin/python -m src
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=usipipo-support-bot
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/log/usipipo
+
+[Install]
+WantedBy=multi-user.target

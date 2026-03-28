@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  support-bot:
+    build: .
+    container_name: usipipo-support-bot
+    restart: unless-stopped
+    env_file: .env
+    networks:
+      - usipipo
+    depends_on:
+      - redis
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  redis:
+    image: redis:7-alpine
+    container_name: usipipo-support-redis
+    restart: unless-stopped
+    networks:
+      - usipipo
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+
+networks:
+  usipipo:
+    driver: bridge
+
+volumes:
+  redis-data:
