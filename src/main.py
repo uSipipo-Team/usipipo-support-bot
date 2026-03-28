@@ -2,10 +2,12 @@
 
 import asyncio
 import logging
+from typing import Any
 
 from telegram import Update
 from telegram.ext import Application, CallbackQueryHandler, CommandHandler, ContextTypes
 
+from src.bot.handlers.auth import AuthHandler
 from src.bot.handlers.tickets import get_tickets_callback_handlers, get_tickets_handlers
 from src.infrastructure.api_client import APIClient
 from src.infrastructure.config import settings
@@ -81,11 +83,12 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 # Global instances (initialized in create_application)
 _api_client: APIClient | None = None
 _token_storage: TokenStorage | None = None
+_auth_handler: AuthHandler | None = None
 
 
 async def _init_dependencies() -> None:
     """Initialize global dependencies."""
-    global _api_client, _token_storage
+    global _api_client, _token_storage, _auth_handler
 
     # Initialize Redis pool
     await RedisPool.get_instance(settings.REDIS_URL)
@@ -102,6 +105,10 @@ async def _init_dependencies() -> None:
     _token_storage = TokenStorage()
     logger.info("Token storage initialized")
 
+    # Initialize auth handler
+    _auth_handler = AuthHandler(_api_client, _token_storage)
+    logger.info("AuthHandler initialized")
+
 
 def _get_api_client() -> APIClient:
     """Get initialized API client."""
@@ -115,6 +122,31 @@ def _get_token_storage() -> TokenStorage:
     if _token_storage is None:
         raise RuntimeError("TokenStorage not initialized. Call _init_dependencies first.")
     return _token_storage
+
+
+def _get_auth_handler() -> AuthHandler:
+    """Get initialized auth handler."""
+    if _auth_handler is None:
+        raise RuntimeError("AuthHandler not initialized. Call _init_dependencies first.")
+    return _auth_handler
+
+
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle /start command."""
+    auth_handler = _get_auth_handler()
+    await auth_handler.start_handler(update, context)
+
+
+async def me(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle /me command - show user profile."""
+    auth_handler = _get_auth_handler()
+    await auth_handler.me_handler(update, context)
+
+
+async def unlink(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle /unlink command - revoke bot access."""
+    auth_handler = _get_auth_handler()
+    await auth_handler.unlink_handler(update, context)
 
 
 def create_application(token: str) -> Application:
@@ -134,6 +166,8 @@ def create_application(token: str) -> Application:
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("help", help_command))
     app.add_handler(CommandHandler("status", status))
+    app.add_handler(CommandHandler("me", me))
+    app.add_handler(CommandHandler("unlink", unlink))
 
     # Register ticket command handlers
     for handler in get_tickets_handlers(api_client, token_storage):

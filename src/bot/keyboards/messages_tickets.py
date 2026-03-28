@@ -67,6 +67,10 @@ class TicketsMessages:
 
         NOT_FOUND = "❌ Ticket no encontrado."
         NOT_AUTHORIZED = "❌ No tenés permiso para ver este ticket."
+        NOT_AUTHENTICATED = (
+            "⚠️ No estás autenticado\n\n"
+            "Por favor iniciá el bot con /start para acceder a los comandos de soporte."
+        )
         INVALID_CATEGORY = "❌ Categoría inválida."
         SUBJECT_TOO_SHORT = "❌ El asunto debe tener al menos 5 caracteres."
         MESSAGE_TOO_SHORT = "❌ El mensaje debe tener al menos 10 caracteres."

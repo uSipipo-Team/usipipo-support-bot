@@ -73,7 +73,7 @@ class TicketsHandler:
             if not await self.tokens.is_authenticated(telegram_id):
                 if update.message:
                     await update.message.reply_text(
-                        TicketsMessages.Error.NOT_AUTHORIZED,
+                        TicketsMessages.Error.NOT_AUTHENTICATED,
                         parse_mode="Markdown",
                     )
                 return
@@ -142,7 +142,7 @@ class TicketsHandler:
             if not await self.tokens.is_authenticated(telegram_id):
                 if update.message:
                     await update.message.reply_text(
-                        TicketsMessages.Error.NOT_AUTHORIZED,
+                        TicketsMessages.Error.NOT_AUTHENTICATED,
                         parse_mode="Markdown",
                     )
                 return
@@ -177,7 +177,7 @@ class TicketsHandler:
             if not await self.tokens.is_authenticated(telegram_id):
                 await self._safe_answer_query(query)
                 await query.edit_message_text(
-                    text=TicketsMessages.Error.NOT_AUTHORIZED,
+                    text=TicketsMessages.Error.NOT_AUTHENTICATED,
                     parse_mode="Markdown",
                 )
                 return
@@ -251,7 +251,7 @@ class TicketsHandler:
             if not await self.tokens.is_authenticated(telegram_id):
                 await self._safe_answer_query(query)
                 await query.edit_message_text(
-                    text=TicketsMessages.Error.NOT_AUTHORIZED,
+                    text=TicketsMessages.Error.NOT_AUTHENTICATED,
                     parse_mode="Markdown",
                 )
                 return
@@ -306,7 +306,7 @@ class TicketsHandler:
             if not await self.tokens.is_authenticated(telegram_id):
                 await self._safe_answer_query(query)
                 await query.edit_message_text(
-                    text=TicketsMessages.Error.NOT_AUTHORIZED,
+                    text=TicketsMessages.Error.NOT_AUTHENTICATED,
                     parse_mode="Markdown",
                 )
                 return
