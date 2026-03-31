@@ -314,12 +314,11 @@ class TicketsHandler:
             # Parse ticket_id from callback_data
             ticket_id = query.data.split(":")[1]
 
-            # Close ticket
+            # Close ticket (POST without body, backend expects this)
             headers = await self._get_auth_headers(telegram_id)
-            response = await self.api.api_client.patch(
+            response = await self.api.api_client.post(
                 f"/tickets/{ticket_id}/close",
                 headers=headers,
-                json={},
             )
 
             # Format success message
@@ -342,6 +341,140 @@ class TicketsHandler:
                 parse_mode="Markdown",
             )
 
+    async def send_message_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Handle send message callback - prompts user for message."""
+        if update.effective_user is None or update.callback_query is None:
+            return
+
+        telegram_id = update.effective_user.id
+        query = update.callback_query
+        logger.info(f"🎫 User {telegram_id} sending message to ticket")
+
+        try:
+            # Check authentication
+            if not await self.tokens.is_authenticated(telegram_id):
+                await self._safe_answer_query(query)
+                await query.edit_message_text(
+                    text=TicketsMessages.Error.NOT_AUTHENTICATED,
+                    parse_mode="Markdown",
+                )
+                return
+
+            # Parse ticket_id from callback_data
+            ticket_id = query.data.split(":")[1]
+
+            # Store ticket_id in user_data for next step
+            context.user_data["send_message_ticket_id"] = ticket_id
+
+            # Prompt user for message
+            await self._safe_answer_query(query)
+            await query.edit_message_text(
+                text="📩 *Enviar Mensaje*\n\n"
+                     "Por favor, escribí tu mensaje a continuación.\n\n"
+                     "Usá /cancelar para cancelar.",
+                parse_mode="Markdown",
+            )
+
+            # Set state to wait for message
+            context.user_data["waiting_for_message"] = True
+
+        except Exception as e:
+            logger.error(f"Error preparing send message: {e}")
+            await self._safe_answer_query(query)
+            await query.edit_message_text(
+                text=TicketsMessages.Error.SYSTEM_ERROR,
+                parse_mode="Markdown",
+            )
+
+    async def receive_message(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Receive user's message and send to ticket."""
+        if update.effective_user is None or update.message is None:
+            return
+
+        telegram_id = update.effective_user.id
+        message_text = update.message.text
+
+        # Check if waiting for message
+        if not context.user_data.get("waiting_for_message"):
+            return
+
+        # Check authentication
+        if not await self.tokens.is_authenticated(telegram_id):
+            await update.message.reply_text(
+                text=TicketsMessages.Error.NOT_AUTHENTICATED,
+                parse_mode="Markdown",
+            )
+            return
+
+        # Validate message length
+        if len(message_text) < 10:
+            await update.message.reply_text(
+                text=TicketsMessages.Error.MESSAGE_TOO_SHORT,
+                parse_mode="Markdown",
+            )
+            return
+
+        ticket_id = context.user_data.get("send_message_ticket_id")
+        if not ticket_id:
+            await update.message.reply_text(
+                text=TicketsMessages.Error.SYSTEM_ERROR,
+                parse_mode="Markdown",
+            )
+            return
+
+        logger.info(f"🎫 User {telegram_id} sending message to ticket {ticket_id}")
+
+        try:
+            # Send message to backend
+            headers = await self._get_auth_headers(telegram_id)
+            response = await self.api.api_client.post(
+                f"/tickets/{ticket_id}/messages",
+                headers=headers,
+                json={"message": message_text},
+            )
+
+            # Get ticket number for message
+            ticket_response = await self.api.api_client.get(
+                f"/tickets/{ticket_id}",
+                headers=headers,
+            )
+            ticket_number = ticket_response.get("ticket_number", "N/A")
+
+            # Success message
+            await update.message.reply_text(
+                text=TicketsMessages.Menu.MESSAGE_SENT.format(ticket_number=ticket_number),
+                parse_mode="Markdown",
+            )
+
+            # Clear state
+            context.user_data["waiting_for_message"] = False
+            context.user_data["send_message_ticket_id"] = None
+
+        except Exception as e:
+            logger.error(f"Error sending message: {e}")
+            await update.message.reply_text(
+                text=TicketsMessages.Error.SYSTEM_ERROR,
+                parse_mode="Markdown",
+            )
+
+    async def cancel_message(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Cancel message sending."""
+        if update.effective_user is None or update.message is None:
+            return
+
+        telegram_id = update.effective_user.id
+        logger.info(f"🎫 User {telegram_id} canceled message sending")
+
+        # Clear state
+        context.user_data["waiting_for_message"] = False
+        context.user_data["send_message_ticket_id"] = None
+
+        await update.message.reply_text(
+            text="❌ *Mensaje Cancelado*\n\n"
+                 "La operación ha sido cancelada.",
+            parse_mode="Markdown",
+        )
+
 
 def get_tickets_handlers(api_client: APIClient, token_storage: TokenStorage):
     """Get tickets command handlers."""
@@ -350,6 +483,7 @@ def get_tickets_handlers(api_client: APIClient, token_storage: TokenStorage):
     return [
         CommandHandler("nuevoticket", handler.create_ticket),
         CommandHandler("tickets", handler.list_tickets),
+        CommandHandler("cancelar", handler.cancel_message),  # Cancel message sending
     ]
 
 
@@ -369,6 +503,10 @@ def get_tickets_callback_handlers(api_client: APIClient, token_storage: TokenSto
         CallbackQueryHandler(
             handler.close_ticket_callback,
             pattern=r"^ticket_close:[\w-]+$",
+        ),
+        CallbackQueryHandler(
+            handler.send_message_callback,
+            pattern=r"^ticket_send:[\w-]+$",
         ),
         CallbackQueryHandler(
             handler.list_tickets,

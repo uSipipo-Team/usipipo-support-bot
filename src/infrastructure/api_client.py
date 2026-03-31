@@ -159,7 +159,7 @@ class APIClient:
             response: HTTP response
 
         Returns:
-            Response JSON data
+            Response JSON data (parsed dict)
 
         Raises:
             Exception: If response status is error
@@ -172,9 +172,10 @@ class APIClient:
         if response.status_code == 204:
             return None
 
-        # JSON response
+        # JSON response - parse it
         try:
-            return await response.aread()
+            return response.json()
         except Exception as e:
-            logger.error(f"Failed to read response: {e}")
-            raise
+            logger.error(f"Failed to parse JSON response: {e}")
+            # Fallback to raw content if JSON parsing fails
+            return await response.aread()
