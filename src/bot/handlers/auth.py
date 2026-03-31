@@ -96,7 +96,7 @@ class AuthHandler:
             )
 
             if "access_token" in response:
-                await self.tokens.store(telegram_id, response)
+                await self.tokens.save(telegram_id, response)
                 if update.message:
                     # Check for deep link for new users too
                     if context.args and len(context.args) > 0:
@@ -223,7 +223,7 @@ class AuthHandler:
             )
 
             if "access_token" in response:
-                await self.tokens.store(telegram_id, response)
+                await self.tokens.save(telegram_id, response)
                 logger.info(f"Tokens refreshed for telegram_id={telegram_id}")
                 return True
 

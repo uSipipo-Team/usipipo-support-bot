@@ -136,11 +136,11 @@ class TestBackendIntegration:
             "ticket_number": "#TKT-12345",
             "status": "CLOSED"
         }
-        mock_api_client.api_client.patch.return_value = mock_ticket
-        
+        mock_api_client.api_client.post.return_value = mock_ticket
+
         # Create handler
         handler = TicketsHandler(mock_api_client, mock_token_storage)
-        
+
         # Mock update and context
         update = MagicMock()
         update.effective_user = MagicMock()
@@ -150,13 +150,13 @@ class TestBackendIntegration:
         update.callback_query.answer = AsyncMock()
         update.callback_query.edit_message_text = AsyncMock()
         context = MagicMock()
-        
+
         # Call handler
         await handler.close_ticket_callback(update, context)
-        
-        # Verify API was called with correct endpoint
-        mock_api_client.api_client.patch.assert_called_once()
-        call_args = mock_api_client.api_client.patch.call_args
+
+        # Verify API was called with correct endpoint (POST not PATCH)
+        mock_api_client.api_client.post.assert_called_once()
+        call_args = mock_api_client.api_client.post.call_args
         assert "/tickets/uuid-123/close" in call_args[0][0]
         assert "Authorization" in call_args[1]["headers"]
 

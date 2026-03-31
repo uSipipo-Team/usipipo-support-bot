@@ -306,11 +306,11 @@ class TestCloseTicketCallback:
         """Test closing ticket."""
         handler = TicketsHandler(mock_api_client, mock_token_storage)
         mock_update.callback_query.data = "ticket_close:uuid-123"
-        mock_api_client.api_client.patch.return_value = mock_ticket_data
-        
+        mock_api_client.api_client.post.return_value = mock_ticket_data
+
         await handler.close_ticket_callback(mock_update, mock_context)
-        
-        mock_api_client.api_client.patch.assert_called_once()
+
+        mock_api_client.api_client.post.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_close_ticket_error(
@@ -323,10 +323,10 @@ class TestCloseTicketCallback:
         """Test closing with error."""
         handler = TicketsHandler(mock_api_client, mock_token_storage)
         mock_update.callback_query.data = "ticket_close:uuid-123"
-        mock_api_client.api_client.patch.side_effect = Exception("API Error")
-        
+        mock_api_client.api_client.post.side_effect = Exception("API Error")
+
         await handler.close_ticket_callback(mock_update, mock_context)
-        
+
         mock_update.callback_query.edit_message_text.assert_called_once()
 
 
@@ -336,11 +336,12 @@ class TestGetTicketsHandlers:
     def test_get_tickets_handlers(self, mock_api_client, mock_token_storage):
         """Test handler registration."""
         handlers = get_tickets_handlers(mock_api_client, mock_token_storage)
-        
-        assert len(handlers) == 2
+
+        assert len(handlers) == 3
         # commands is a frozenset
         assert "nuevoticket" in handlers[0].commands
         assert "tickets" in handlers[1].commands
+        assert "cancelar" in handlers[2].commands
 
 
 class TestGetTicketsCallbackHandlers:
@@ -349,5 +350,5 @@ class TestGetTicketsCallbackHandlers:
     def test_get_tickets_callback_handlers(self, mock_api_client, mock_token_storage):
         """Test callback handler registration."""
         handlers = get_tickets_callback_handlers(mock_api_client, mock_token_storage)
-        
-        assert len(handlers) == 4
+
+        assert len(handlers) == 5

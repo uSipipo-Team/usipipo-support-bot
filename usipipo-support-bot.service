@@ -5,12 +5,12 @@ After=network.target redis.service
 
 [Service]
 Type=simple
-User=usipipo
-Group=usipipo
-WorkingDirectory=/opt/usipipo-support-bot
-Environment=PATH=/opt/usipipo-support-bot/.venv/bin
-EnvironmentFile=/opt/usipipo-support-bot/.env
-ExecStart=/opt/usipipo-support-bot/.venv/bin/python -m src
+User=mowgli
+Group=mowgli
+WorkingDirectory=/home/mowgli/usipipo/usipipo-support-bot
+Environment=PATH=/home/mowgli/usipipo/usipipo-support-bot/.venv/bin
+EnvironmentFile=/home/mowgli/usipipo/usipipo-support-bot/.env
+ExecStart=/home/mowgli/usipipo/usipipo-support-bot/.venv/bin/python -m src.main
 Restart=always
 RestartSec=5
 StandardOutput=journal
@@ -21,7 +21,8 @@ SyslogIdentifier=usipipo-support-bot
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
-ProtectHome=true
+ProtectHome=false
+ReadWritePaths=/home/mowgli/usipipo/usipipo-support-bot
 ReadWritePaths=/var/log/usipipo
 
 [Install]
