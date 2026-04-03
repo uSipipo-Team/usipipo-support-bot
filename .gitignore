@@ -80,3 +80,4 @@ logs/
 # Local configuration
 .env.local
 .env.*.local
+.env.example
