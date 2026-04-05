@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-04-05
+
+### Changed
+- **No code changes needed** - Support bot already fully compatible with user_id UUID migration
+- TokenData already stores `user_id` from auth response
+- `telegram_id` only used as Redis key (correct — platform identifier)
+- No business logic endpoints called that require `user_id` parameter
+
 ## [0.3.0] - 2026-03-30
 
 ### Added
